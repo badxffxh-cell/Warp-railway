@@ -12,4 +12,4 @@ ENV NODE_ENV=production
 ENV PORT=8080
 USER node
 EXPOSE 8080
-CMD ["/bin/sh", "-c", "npm run db:migrate && exec npm start"]
+CMD ["npm", "start"]
