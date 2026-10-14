@@ -6,6 +6,7 @@ import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk'
 import { serverSchema, channelSchema, messageSchema, type RealtimeEvent } from '@warp/shared';
 import type { Config } from './config.js';
 import { installSocial } from './social.js';
+import { voiceRequest, voiceFailure } from './voice-errors.js';
 import { HttpError, newToken, hashToken } from './security.js';
 
 const uuid = z.string().uuid();
@@ -171,7 +172,7 @@ export async function installCommunity(
           (e as { status?: number }).status !== 404 &&
           (e as { code?: string }).code !== 'not_found'
         )
-          throw e;
+          throw voiceFailure(e);
       }
       await db.voiceSession.deleteMany({ where: { id: s.id } });
     }
@@ -620,7 +621,7 @@ export async function installCommunity(
       identity = `${req.auth!.user.id}:${sessionId}`,
       room = `warp-${id}`;
     await removeVoice({ sessionId });
-    await voice.createRoom({ name: room, emptyTimeout: 60, maxParticipants: 20 });
+    await voiceRequest(() => voice.createRoom({ name: room, emptyTimeout: 60, maxParticipants: 20 }));
     await db.voiceSession.create({
       data: { sessionId, userId: req.auth!.user.id, channelId: id, room, identity },
     });
