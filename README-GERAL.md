@@ -1,32 +1,21 @@
-# WARP — pacotes independentes
+# WARP 0.2.0 — servidores, amigos e conversas
 
-Esta entrega contém a **Fase 1 funcional (contas, autenticação, perfil e sessões)**, com aplicativo Windows Tauri. Ainda não é a plataforma de comunicação completa: servidores, canais, mensagens, amizades, bots, voz e vídeo dependem das próximas fases.
+Pacotes independentes: **warp-api.zip**, **warp-web.zip**, **warp-desktop.zip**. Esta versão substitui a entrega 0.1.0. Comece por **ATUALIZAR-0.2.md** para atualizar os repositórios já usados no Render e na Vercel.
 
-| Arquivo            | Uso                                                |
-| ------------------ | -------------------------------------------------- |
-| `warp-api.zip`     | Backend Fastify/PostgreSQL para Railway            |
-| `warp-web.zip`     | Site React/Vite para Vercel                        |
-| `warp-desktop.zip` | Fontes Tauri e instalador Windows quando compilado |
+Inclui criação/edição/exclusão de servidores, convites com validade e limite, canais de texto/voz, proprietário/admin/membro, expulsão e transferência, amizade por @username, aceitar/recusar/cancelar, bloqueio, DM, histórico, editar/excluir mensagens, digitação, WebSocket com reconexão e integração LiveKit para voz/vídeo/tela.
 
-Cada ZIP contém os pacotes compartilhados necessários, sem depender das pastas dos outros ZIPs. Não há senhas reais, banco local, node_modules ou credenciais nos arquivos.
+Não está automaticamente publicado. Substitua os arquivos do GitHub pelos arquivos extraídos e faça deploy da API antes do site. O Dockerfile aplica migrations preservando contas existentes; faça backup antes de atualizar. O vercel.json já contém o destino Render informado pelo proprietário: https://warp-railway.onrender.com.
 
-## Colocar no ar e gerar o link
+**Voz exige um LiveKit público configurado.** Sem isso, amigos/servidores/texto funcionam, mas não há chamadas pela internet. Veja **VOZ-LIVEKIT.md**. Nenhuma chave real está nos ZIPs. Não inclua os arquivos .env locais no GitHub.
 
-1. Extraia a API e siga **DEPLOY_RAILWAY.md**: envie os arquivos ao GitHub, crie PostgreSQL e o serviço, configure variáveis e e-mail, publique e gere o domínio HTTPS.
-2. Extraia o site e siga **DEPLOY_VERCEL.md**: coloque o domínio Railway no `vercel.json`, envie ao GitHub e importe na Vercel. Use `VITE_API_URL=/api`.
-3. Copie o domínio estável gerado pela Vercel para `WEB_URL` e `CORS_ORIGINS` da API. Faça redeploy da API.
-4. Teste `/health` da API e `/api/health` no site. Crie conta, confirme e-mail e teste login em outro navegador.
-5. Compartilhe **o link de produção do site**, semelhante a `https://seu-warp.vercel.app`. Esse exemplo não é um endereço já publicado. Seus usuários não precisam de conta Railway/Vercel.
-6. Para Windows, siga **BUILD_WINDOWS.md** e configure os mesmos domínios públicos no aplicativo.
+## Documentos
+- ATUALIZAR-0.2.md: passo a passo para seus projetos atuais Render/Vercel.
+- DEPLOY_RAILWAY.md: instalação inicial da API no Railway e configuração de e-mail. Também mantenha PUBLIC_API_URL no domínio direto da API.
+- DEPLOY_VERCEL.md: instalação inicial do site.
+- VOZ-LIVEKIT.md: infraestrutura de mídia, portas, TURN e estimativa de banda.
+- BUILD_WINDOWS.md: compilação do Tauri no Windows.
+- TESTES-RELEASE.md: verificações executadas e limites da entrega.
 
-Depois do deploy de API, PostgreSQL e site, seu computador não precisa permanecer ligado. O desktop acessa o mesmo banco através da API.
+Compartilhe https://warp-warp.vercel.app depois de confirmar os dois endpoints /health na versão 0.2.0 e testar login/servidor/amizade em duas contas. O computador de desenvolvimento não precisa ficar ligado após publicar API, banco, site e serviço de voz.
 
-## Contas necessárias
-
-Railway, Vercel, GitHub e provedor de e-mail. Verificação e recuperação de senha precisam de remetente autorizado pelo provedor; o domínio gratuito da Vercel não é um domínio de envio de e-mail. Infraestrutura e e-mail estão sujeitos aos planos e limites de suas contas.
-
-O estado da tentativa de publicação está em **TESTES-RELEASE.md**. Compilação local não é serviço publicado: sem URLs reais confirmadas nesse relatório, os pacotes ainda precisam de deploy.
-
-## Atualizações
-
-Mantenha os pacotes na mesma versão. Alterar `VITE_API_URL` exige novo build. Aplique novas migrations no pre-deploy da API. Mantenha backups do PostgreSQL; nunca envie `.env` ou chaves ao GitHub.
+Esta entrega não implementa todo o escopo original: cargos personalizados, categorias/canais privados, grupos de DM, anexos/busca no chat, bots, banimentos e push offline continuam pendentes. Sem emojis na interface.

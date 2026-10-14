@@ -72,3 +72,21 @@ export type SessionInfo = {
 export type AuthResponse = { user: UserProfile; csrfToken: string; expiresAt: string };
 export type ApiError = { error: { code: string; message: string; requestId?: string } };
 export const API_VERSION = 'v1';
+export const serverSchema = z.object({ name: z.string().trim().min(1).max(80), description: z.string().trim().max(500).default('') }).strict();
+export const channelSchema = z.object({ name: z.string().trim().min(1).max(80), kind: z.enum(['TEXT', 'VOICE']) }).strict();
+export const messageSchema = z.object({ content: z.string().trim().min(1).max(4000), clientId: z.string().uuid() }).strict();
+export type ChannelInfo = { id: string; serverId: string | null; name: string; kind: 'TEXT' | 'VOICE'; position: number };
+export type FriendInfo = { id: string; user: PublicUser; status: 'PENDING' | 'ACCEPTED'; incoming: boolean; channel: ChannelInfo | null };
+export type ServerInfo = { id: string; name: string; description: string; ownerId: string; role: 'OWNER' | 'ADMIN' | 'MEMBER'; channels: ChannelInfo[] };
+export type PublicUser = Pick<UserProfile, 'id' | 'username' | 'displayName' | 'avatarUrl'>;
+export type ChatMessage = { id: string; sequence: string; channelId: string; clientId: string; content: string; author: PublicUser | null; createdAt: string; editedAt: string | null; deletedAt: string | null };
+export type MemberInfo = { user: PublicUser; role: 'OWNER' | 'ADMIN' | 'MEMBER' };
+export type RealtimeEvent =
+  | { type: 'ready' }
+  | { type: 'subscribed'; channelId: string }
+  | { type: 'message'; message: ChatMessage }
+  | { type: 'servers.changed' }
+  | { type: 'friends.changed' }
+  | { type: 'call'; channelId: string; user: PublicUser }
+  | { type: 'typing'; channelId: string; user: PublicUser }
+  | { type: 'error'; message: string };

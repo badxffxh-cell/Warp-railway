@@ -1,6 +1,6 @@
 {
   "name": "@warp/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -19,16 +19,19 @@
     "@fastify/helmet": "13.1.2",
     "@fastify/multipart": "9.4.0",
     "@fastify/rate-limit": "10.3.0",
+    "@fastify/websocket": "11.3.4",
     "@prisma/client": "6.19.3",
-    "@warp/shared": "0.1.0",
+    "@warp/shared": "0.2.0",
     "argon2": "0.44.0",
     "fastify": "5.12.5",
+    "livekit-server-sdk": "2.19.1",
     "nodemailer": "10.1.0",
     "sharp": "0.35.5",
     "zod": "3.25.76"
   },
   "devDependencies": {
     "@types/nodemailer": "7.0.12",
+    "@types/ws": "8.18.2",
     "prisma": "6.19.3",
     "tsx": "4.23.15"
   }

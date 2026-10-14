@@ -1,10 +1,12 @@
+> **Atualização 0.2.0:** para os projetos existentes, siga primeiro ATUALIZAR-0.2.md. Configure PUBLIC_API_URL na API e consulte VOZ-LIVEKIT.md para chamadas. O roteiro abaixo documenta a instalação inicial.
+
 # Warp para Windows
 
 O pacote `warp-desktop.zip` contém o código Tauri 2, a interface compartilhada e seus contratos. Não precisa das pastas dos outros ZIPs. Esta versão oferece contas, perfis e sessões da Fase 1. Chat, servidores, chamadas, câmera e compartilhamento de tela ainda não foram implementados.
 
 ## Usar o instalador
 
-Se a pasta `instalador` estiver presente, execute `Warp_0.1.0_x64-setup.exe`. Ele instala para seu usuário e pode baixar o WebView2 oficial da Microsoft se necessário. A compilação não tem certificado comercial de assinatura de código.
+Se a pasta `instalador` estiver presente, execute `Warp_0.2.0_x64-setup.exe`. Ele instala para seu usuário e pode baixar o WebView2 oficial da Microsoft se necessário. A compilação não tem certificado comercial de assinatura de código.
 
 Na primeira abertura, preencha:
 

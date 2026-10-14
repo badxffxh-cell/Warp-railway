@@ -1,3 +1,5 @@
+> **Atualização 0.2.0:** para os projetos existentes, siga primeiro ATUALIZAR-0.2.md. Configure PUBLIC_API_URL na API e consulte VOZ-LIVEKIT.md para chamadas. O roteiro abaixo documenta a instalação inicial.
+
 # Publicar a API Warp no Railway
 
 Este pacote é independente: contém `apps/api`, `packages/shared`, migrations, lockfile, Dockerfile e railway.json. Publique **todo o conteúdo da pasta warp-api**, incluindo as subpastas. Não publique somente `apps/api`. Recursos entregues: contas/perfis/sessões da Fase 1. Chat, servidores e voz ainda não existem. O cliente desktop usa esta mesma API.

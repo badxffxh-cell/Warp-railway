@@ -1,3 +1,5 @@
+> **Atualização 0.2.0:** para os projetos existentes, siga primeiro ATUALIZAR-0.2.md. Configure PUBLIC_API_URL na API e consulte VOZ-LIVEKIT.md para chamadas. O roteiro abaixo documenta a instalação inicial.
+
 # Publicar o site Warp e obter um link para compartilhar
 
 Use o novo `warp-web.zip`, que contém frontend, UI e contratos compartilhados. Ele não depende da pasta da API. Esta entrega publica somente as funcionalidades da Fase 1.

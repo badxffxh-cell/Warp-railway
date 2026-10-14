@@ -1,35 +1,33 @@
-# Testes e publicação — 12/10/2026
+﻿# Validação WARP 0.2.0 — 13 e 14/10/2026
 
-## Executado nesta entrega
+## Executado e aprovado
 
-| Verificação | Resultado |
-|---|---|
-| Testes da API | 30 passaram, 0 falharam; 27 integrações com PostgreSQL real e 3 testes de configuração/transporte de e-mail |
-| Build API e site no monorepo | Passou |
-| API exportada independente | `npm ci`, Prisma generate e build passaram |
-| Site exportado independente | `npm ci` e build com `VITE_API_URL=/api` passaram |
-| Desktop exportado independente | `npm ci` e build React/TypeScript passaram; Cargo metadata offline com lockfile resolveu dentro da própria exportação |
-| Aplicativo Windows x64 | Build Tauri 2 release concluído com Rust 1.99.0/MSVC; instalador NSIS gerado (2.976.349 bytes) |
-| Testes Rust | 2 passaram: restrição de origens/caminhos e gravação/leitura/exclusão de uma credencial descartável no Gerenciador de Credenciais real do Windows |
-| Inicialização do executável | Processo permaneceu ativo e criou `msedgewebview2.exe`; encerrado após a verificação |
-| Auditoria npm dos pacotes | 0 vulnerabilidades reportadas durante as instalações executadas |
+- Build TypeScript da API, shared e UI; build Vite do site e frontend desktop.
+- npm ci e build em cada pacote exportado, em pastas independentes. Prisma Client gerado no pacote da API. Nenhum depende das pastas dos demais ZIPs.
+- **41 testes automatizados**, PostgreSQL real no banco dedicado warp_test. Rodados na fonte e novamente no pacote da API exportado. Nenhum teste pulado.
+- Autenticação Argon2id, login, cookies persistentes, renovação/revogação, CSRF, recuperação/verificação, perfil, avatar e exclusão de conta continuam cobertos.
+- Servidor cria canais texto/voz; terceiros não acessam; convite de uso único sob joins concorrentes; proprietário concede administrador; membro não escala privilégio; admin não exclui servidor.
+- Mensagens persistidas e entregues por WebSocket real; reenvio idempotente; edição só pelo autor; exclusão moderada; paginação; revogação de sessão e ticket de uso único.
+- Amizades por @username normalizado; somente destinatário aceita; terceiros não acessam DM; bloqueio revoga conversa e impede pedidos; expulsão revoga acesso.
+- Voz sem configuração retorna 503 VOICE_UNAVAILABLE com mensagem sobre LiveKit, sem simular conexão.
+- Navegador local: login, recebimento/aceite de amizade, envio de DM, recebimento ao vivo de mensagem de segunda conta, criação de servidor com canais automáticos e aviso visual de chamada. Layout compacto e desktop inspecionados.
+- **LiveKit Server 1.13.9 local**: dois clientes RTC Node reais transmitiram tons sintéticos via WebRTC/Opus nas duas direções. Última execução: 218 e 221 frames recebidos, energia de áudio não nula em ambos. Desconexão por moderador e entrada em sala privada de amigos aprovadas.
+- Instalador Windows x64 Warp_0.2.0_x64-setup.exe compilado com Tauri 2/NSIS. Incluído em warp-desktop/instalador/.
+- Teste Rust restrict_origins_and_paths passou, incluindo novas rotas e paginação. Resultados não foram simulados.
 
-O teste de inicialização não comprova renderização, login completo, bandeja ou notificações pela interface. O controle das janelas do Windows retornou timeout em todas as tentativas, incluindo reinicialização da conexão; não foi possível executar testes visuais nativos. Os testes de navegador da entrega anterior estão registrados em `TESTES-FASE-1.md` no monorepo.
+## Não executado / limites
 
-## Tentativa de publicação
+- Não publicado automaticamente nos projetos de produção. Atualize os repositórios e espere Render/Vercel concluírem o deploy.
+- Não testados microfones físicos, câmera/tela, áudio entre aparelhos diferentes, Wi-Fi/dados móveis distintos, NAT/TURN na internet ou chamada entre navegador e WebView2. Teste local com áudio sintético não comprova essas condições.
+- Compilar o instalador não comprova todos os fluxos nativos de microfone, compartilhamento e notificações. Validar no Windows de destino.
+- Sem teste de carga, múltiplas réplicas, execução Docker neste host ou garantia de capacidade em hospedagem gratuita. Esta versão exige uma única instância da API.
+- Vite avisou sobre chunk de voz com aproximadamente 570 kB antes de gzip; carregado sob demanda. Build concluído.
+- Funções ainda ausentes estão em ATUALIZAR-0.2.md. Esta versão não é a plataforma completa do pedido inicial.
 
-**Nenhum site ou API foi publicado nesta execução. Não há URL pública criada.**
+## Reproduzir
 
-- Railway: a integração retornou `USER_NOT_LOGGED_IN` / conta não conectada. O navegador disponível mostrava login. A ferramenta de deploy também exige um repositório GitHub confirmado, ainda não fornecido.
-- Vercel: a integração conectada respondeu às consultas de projetos/equipes, ambas vazias. A tentativa de criar o deploy retornou `Unknown tool: vercel.create_deployment`; nenhum deploy foi confirmado. O navegador disponível também estava na tela de login.
-- Controle do PC: a listagem de aplicativos do Windows não respondeu, mesmo após a tentativa de recuperação. Não foi possível aproveitar uma eventual sessão aberta em outro navegador.
-- Para a API de produção, falta configurar um provedor/remetente de e-mail e suas credenciais no Railway. Nenhuma credencial foi inventada ou incluída na entrega.
+Na API, configure DATABASE_URL e TEST_DATABASE_URL em apps/api/.env. O segundo deve terminar em _test e ser um banco dedicado, nunca produção. Execute npm ci, npm run db:generate, npm run build e npm test. O runner aplica migrations no banco de teste.
 
-## Não executado / ainda indisponível
+Para áudio, configure um LiveKit somente local e inicie a API em localhost:3001, com origem localhost:5173 e e-mail de desenvolvimento. Instale @livekit/rtc-node@1.1.0 num ambiente de teste e execute node apps/api/scripts/test-voice-local.mjs. O script cria contas temporárias em localhost, transmite tons e apaga seus próprios dados. Resultado em voice-test-result.json. Não usa microfone nem comprova chamadas entre dispositivos.
 
-- Deploy público, build Docker, TLS/rewrite da Vercel e envio real de e-mails por Resend/SMTP.
-- Instalação manual do NSIS em outro Windows e fluxo completo de login entre navegador e WebView2. O instalador não possui assinatura comercial de código.
-- Testes em dispositivos/redes diferentes.
-- Servidores, canais, permissões de comunicação, mensagens, amizades, bots, WebSocket, voz, vídeo e compartilhamento de tela: módulos ainda não implementados nesta Fase 1, portanto não testados.
-
-Execute as validações finais dos guias após publicar. Não trate o instalador ou os ZIPs como comprovação de funcionamento de recursos ainda não implementados.
+No Windows com Rust/MSVC, execute cargo test --release --manifest-path apps/desktop/src-tauri/Cargo.toml restrict_origins_and_paths. No pacote desktop, npm run desktop:build gera o instalador.

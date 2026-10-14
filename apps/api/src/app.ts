@@ -4,6 +4,8 @@ import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import multipart from '@fastify/multipart';
+import websocket from '@fastify/websocket';
+import { installCommunity } from './community.js';
 import { Prisma, PrismaClient, type Session, type User, type TokenPurpose } from '@prisma/client';
 import { z, ZodError } from 'zod';
 import sharp from 'sharp';
@@ -78,6 +80,7 @@ export async function buildApp(
   } as const;
   const dummyHash = await passwordHash(newToken());
   app.decorateRequest('auth', null);
+  await app.register(websocket, { options: { maxPayload: 8192 } });
   await app.register(cookie);
   await app.register(cors, {
     origin: [...origins],
@@ -124,13 +127,14 @@ export async function buildApp(
         });
     const failure = err as { statusCode?: number; code?: string; message?: string };
     const status = typeof failure.statusCode === 'number' ? failure.statusCode : 500;
+    const hideDetails = status >= 500 && !(err instanceof HttpError);
     if (status >= 500) req.log.error({ code: failure.code, requestId: req.id }, 'Request failed');
     return reply
       .code(status)
       .send({
         error: {
-          code: status >= 500 ? 'INTERNAL' : (failure.code ?? 'REQUEST_ERROR'),
-          message: status >= 500 ? 'Não foi possível concluir. Tente novamente.' : failure.message,
+          code: hideDetails ? 'INTERNAL' : (failure.code ?? 'REQUEST_ERROR'),
+          message: hideDetails ? 'Não foi possível concluir. Tente novamente.' : failure.message,
           requestId: req.id,
         },
       });
@@ -273,7 +277,7 @@ export async function buildApp(
   app.get('/health', async (_req, reply) => {
     try {
       await db.$queryRaw`SELECT 1`;
-      return { status: 'ok', service: 'warp-api', version: '0.1.0' };
+      return { status: 'ok', service: 'warp-api', version: '0.2.0' };
     } catch {
       return reply.code(503).send({ status: 'unavailable' });
     }
@@ -478,12 +482,17 @@ export async function buildApp(
     const user = req.auth!.user;
     if (!(await passwordMatches(user.passwordHash, password)))
       throw new HttpError(400, 'WRONG_PASSWORD', 'Senha incorreta.');
+    if (await db.server.count({ where: { ownerId: user.id } }))
+      throw new HttpError(409, 'OWNS_SERVERS', 'Transfira ou exclua seus servidores antes de excluir a conta.');
     await db.$transaction(async (tx) => {
       await tx.auditLog.create({ data: { userId: user.id, action: 'account.deleted' } });
+      const friendships = await tx.friendship.findMany({ where: { OR: [{ userAId: user.id }, { userBId: user.id }] }, select: { channelId: true } });
+      await tx.channel.deleteMany({ where: { id: { in: friendships.flatMap(f => f.channelId ? [f.channelId] : []) } } });
       await tx.user.delete({ where: { id: user.id } });
     });
     reply.clearCookie(cookieName, cookieOptions);
     return { ok: true };
   });
+  await installCommunity(app, db, cfg, authenticate);
   return app;
 }

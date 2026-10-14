@@ -16,6 +16,10 @@ export const configSchema = z.object({
   SMTP_PASSWORD: z.string().optional(),
   MAIL_FROM: z.string().default('Warp <noreply@example.com>'),
   DEV_MAIL_DIR: z.string().optional(),
+  PUBLIC_API_URL: z.string().url().optional(),
+  LIVEKIT_URL: z.string().url().optional(),
+  LIVEKIT_API_KEY: z.string().optional(),
+  LIVEKIT_API_SECRET: z.string().min(32).optional(),
 });
 export type Config = z.infer<typeof configSchema>;
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -38,5 +42,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   }
   if (cfg.COOKIE_SAME_SITE === 'none' && cfg.NODE_ENV !== 'production')
     throw new Error('SameSite=None requires production HTTPS.');
+  if (cfg.PUBLIC_API_URL && (new URL(cfg.PUBLIC_API_URL).origin !== cfg.PUBLIC_API_URL || (cfg.NODE_ENV === 'production' && !cfg.PUBLIC_API_URL.startsWith('https://'))))
+    throw new Error('PUBLIC_API_URL must be an origin, using HTTPS in production.');
+  if (cfg.LIVEKIT_URL && (!/^wss?:\/\//.test(cfg.LIVEKIT_URL) || (cfg.NODE_ENV === 'production' && !cfg.LIVEKIT_URL.startsWith('wss://'))))
+    throw new Error('LIVEKIT_URL must use WSS in production.');
   return cfg;
 }
