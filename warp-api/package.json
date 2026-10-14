@@ -1,0 +1,26 @@
+{
+  "name": "warp-api-release",
+  "version": "0.2.0",
+  "private": true,
+  "workspaces": [
+    "apps/api",
+    "packages/shared"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "npm run build -w @warp/shared && npm run build -w @warp/api",
+    "start": "npm run start -w @warp/api",
+    "db:generate": "npm run db:generate -w @warp/api",
+    "db:migrate": "npm run db:migrate -w @warp/api",
+    "test": "npm run test -w @warp/api"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "@types/node": "24.19.2"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.2"
+  }
+}

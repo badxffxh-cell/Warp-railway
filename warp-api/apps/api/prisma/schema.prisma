@@ -1,0 +1,201 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum UserStatus {
+  ONLINE
+  AWAY
+  BUSY
+  INVISIBLE
+}
+enum TokenPurpose {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+}
+model User {
+  id String @id @default(uuid()) @db.Uuid
+  email String @unique @db.VarChar(254)
+  username String @unique @db.VarChar(32)
+  displayName String @db.VarChar(60)
+  passwordHash String
+  bio String @default("") @db.VarChar(240)
+  avatar Bytes?
+  avatarVersion String?
+  status UserStatus @default(ONLINE)
+  emailVerifiedAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  sessions Session[]
+  tokens AccountToken[]
+  auditLogs AuditLog[]
+  ownedServers Server[]
+  memberships ServerMember[]
+  messages Message[]
+  friendshipsA Friendship[] @relation("friendA")
+  friendshipsB Friendship[] @relation("friendB")
+  blocks UserBlock[] @relation("blocker")
+  blockedBy UserBlock[] @relation("blocked")
+  @@map("users")
+}
+model Session {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique @db.Char(64)
+  device String @db.VarChar(256)
+  persistent Boolean @default(false)
+  createdAt DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+  expiresAt DateTime
+  absoluteExpiresAt DateTime
+  realtimeTickets RealtimeTicket[]
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+enum ChannelKind {
+  TEXT
+  VOICE
+}
+enum MemberRole {
+  ADMIN
+  MEMBER
+}
+model Server {
+  id String @id @default(uuid()) @db.Uuid
+  name String @db.VarChar(80)
+  description String @default("") @db.VarChar(500)
+  ownerId String @db.Uuid
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  members ServerMember[]
+  channels Channel[]
+  invites Invite[]
+  @@index([ownerId])
+  @@map("servers")
+}
+model ServerMember {
+  serverId String @db.Uuid
+  userId String @db.Uuid
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role MemberRole @default(MEMBER)
+  joinedAt DateTime @default(now())
+  @@id([serverId, userId])
+  @@index([userId])
+  @@map("server_members")
+}
+model Channel {
+  id String @id @default(uuid()) @db.Uuid
+  serverId String? @db.Uuid
+  server Server? @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  name String @db.VarChar(80)
+  kind ChannelKind
+  position Int @default(0)
+  createdAt DateTime @default(now())
+  messages Message[]
+  friendship Friendship?
+  @@index([serverId, position])
+  @@map("channels")
+}
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+}
+model Friendship {
+  id String @id @default(uuid()) @db.Uuid
+  userAId String @db.Uuid
+  userBId String @db.Uuid
+  userA User @relation("friendA", fields: [userAId], references: [id], onDelete: Cascade)
+  userB User @relation("friendB", fields: [userBId], references: [id], onDelete: Cascade)
+  requestedBy String @db.Uuid
+  status FriendshipStatus @default(PENDING)
+  channelId String? @unique @db.Uuid
+  channel Channel? @relation(fields: [channelId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  @@unique([userAId, userBId])
+  @@index([userBId])
+  @@map("friendships")
+}
+model UserBlock {
+  userId String @db.Uuid
+  targetId String @db.Uuid
+  user User @relation("blocker", fields: [userId], references: [id], onDelete: Cascade)
+  target User @relation("blocked", fields: [targetId], references: [id], onDelete: Cascade)
+  @@id([userId, targetId])
+  @@index([targetId])
+  @@map("user_blocks")
+}
+model Invite {
+  id String @id @default(uuid()) @db.Uuid
+  codeHash String @unique @db.Char(64)
+  serverId String @db.Uuid
+  server Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  maxUses Int
+  uses Int @default(0)
+  createdAt DateTime @default(now())
+  @@index([serverId])
+  @@map("invites")
+}
+model Message {
+  id String @id @default(uuid()) @db.Uuid
+  sequence BigInt @unique @default(autoincrement())
+  channelId String @db.Uuid
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  authorId String? @db.Uuid
+  author User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  clientId String @db.Uuid
+  content String @db.VarChar(4000)
+  createdAt DateTime @default(now())
+  editedAt DateTime?
+  deletedAt DateTime?
+  @@unique([channelId, authorId, clientId])
+  @@index([channelId, sequence])
+  @@map("messages")
+}
+model RealtimeTicket {
+  hash String @id @db.Char(64)
+  sessionId String @db.Uuid
+  session Session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  @@index([expiresAt])
+  @@map("realtime_tickets")
+}
+model VoiceSession {
+  id String @id @default(uuid()) @db.Uuid
+  sessionId String @unique @db.Uuid
+  userId String @db.Uuid
+  channelId String @db.Uuid
+  room String
+  identity String @unique
+  createdAt DateTime @default(now())
+  @@index([channelId])
+  @@map("voice_sessions")
+}
+model AccountToken {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String @unique @db.Char(64)
+  purpose TokenPurpose
+  expiresAt DateTime
+  consumedAt DateTime?
+  createdAt DateTime @default(now())
+  @@index([userId, purpose])
+  @@index([expiresAt])
+  @@map("account_tokens")
+}
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+  userId String? @db.Uuid
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action String @db.VarChar(80)
+  createdAt DateTime @default(now())
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}
